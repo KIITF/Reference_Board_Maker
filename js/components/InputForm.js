@@ -394,7 +394,7 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
             Object.values(customFields).some(val => val && val.trim());
         
         if (!hasTextInput) {
-            setError('対応箇所、指示内容、またはカスタム列のいずれかを入力してください');
+            setError('対応箇所、参考内容、またはカスタム列のいずれかを入力してください');
             return;
         }
 

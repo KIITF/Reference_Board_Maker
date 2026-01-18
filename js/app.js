@@ -21,8 +21,8 @@ window.App = function App() {
     const [reinitTrigger, setReinitTrigger] = React.useState(0); // 再初期化トリガー
     const [globalMessage, setGlobalMessage] = React.useState(''); // 全体のメッセージ
     const [standardColumns, setStandardColumns] = React.useState([
-        { id: 'location', name: '対応箇所', fixed: false },
-        { id: 'memo', name: '指示内容', fixed: false }
+        { id: 'location', name: '制作楽曲との対応箇所', fixed: false },
+        { id: 'memo', name: '参考内容', fixed: false }
     ]); // 標準カラム
     const [customColumns, setCustomColumns] = React.useState([]); // カスタムカラム [{id, name}]
     const [showResetModal, setShowResetModal] = React.useState(false); // リセット確認モーダル
@@ -197,19 +197,6 @@ window.App = function App() {
                 order: idx + 1
             }));
             setReferences(reordered);
-            // データをURLに保存してからリロード
-            setTimeout(() => {
-                const data = {
-                    references: reordered,
-                    globalMessage: globalMessage,
-                    standardColumns: standardColumns,
-                    customColumns: customColumns
-                };
-                encodeToUrl(data);
-                // スクロール位置を保存
-                sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-                window.location.reload();
-            }, 100);
         } else {
             // 先頭に追加
             const newReferences = [referenceWithCustomFields, ...references];
@@ -219,19 +206,6 @@ window.App = function App() {
                 order: idx + 1
             }));
             setReferences(reordered);
-            // データをURLに保存してからリロード
-            setTimeout(() => {
-                const data = {
-                    references: reordered,
-                    globalMessage: globalMessage,
-                    standardColumns: standardColumns,
-                    customColumns: customColumns
-                };
-                encodeToUrl(data);
-                // スクロール位置を保存
-                sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-                window.location.reload();
-            }, 100);
         }
         setShowFormAtIndex(null);
     };
@@ -359,20 +333,6 @@ window.App = function App() {
             }));
             
             setReferences(reordered);
-            
-            // データをURLに保存してからリロード
-            setTimeout(() => {
-                const data = {
-                    references: reordered,
-                    globalMessage: globalMessage,
-                    standardColumns: standardColumns,
-                    customColumns: customColumns
-                };
-                encodeToUrl(data);
-                // スクロール位置を保存
-                sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-                window.location.reload();
-            }, 100);
         } else {
             setReferences(updated);
         }
@@ -427,19 +387,7 @@ window.App = function App() {
         setDraggedIndex(null);
         setDragOverIndex(null);
         
-        // データをURLに保存してからリロード
-        setTimeout(() => {
-            const data = {
-                references: reorderedReferences,
-                globalMessage: globalMessage,
-                standardColumns: standardColumns,
-                customColumns: customColumns
-            };
-            encodeToUrl(data);
-            // スクロール位置を保存
-            sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-            window.location.reload();
-        }, 100);
+
     };
 
     const copyShareUrl = () => {
@@ -464,8 +412,8 @@ window.App = function App() {
         setReferences([]);
         setGlobalMessage('');
         setStandardColumns([
-            { id: 'location', name: '対応箇所', fixed: false },
-            { id: 'memo', name: '指示内容', fixed: false }
+            { id: 'location', name: '制作楽曲との対応箇所', fixed: false },
+            { id: 'memo', name: '参考内容', fixed: false }
         ]);
         setCustomColumns([]);
         setShareUrl('');
@@ -516,6 +464,7 @@ window.App = function App() {
                     <div className="flex items-center justify-between">
                         <div onClick={handleResetToHome} className="cursor-pointer hover:opacity-80 transition-opacity">
                             <h1 className="text-3xl font-bold">Reference Board Maker</h1>
+                            {/* <h1 className="text-3xl font-bold">リファレンス・メイカー</h1> */}
                             <p className="text-blue-100 mt-1">映像リファレンス制作ツール</p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -555,6 +504,7 @@ window.App = function App() {
                                             <div className="space-y-3">
                                                 <label className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                                                     <span className="text-gray-700">動画の上部を隠す</span>
+                                                    <p className="text-s text-amber-600 mt-3 leading-relaxed">動画情報隠す用</p>
                                                     <input
                                                         type="checkbox"
                                                         checked={showOverlay}
@@ -573,8 +523,7 @@ window.App = function App() {
                                                         />
                                                     </label>
                                                     <p className="text-s text-amber-600 mt-3 leading-relaxed">
-                                                        ※ 指定した時間から数秒のズレがある可能性があります。<br/>
-                                                        {/* ※ 画面が黒い場合は何回かクリックしてください。 */}
+                                                        ※ 指定した時間から数秒ズレる可能性があります。
                                                     </p>
                                                 </div>
                                                 <label className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">

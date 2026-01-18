@@ -1,6 +1,12 @@
 window.ReferenceCard = function ReferenceCard({ reference, onDelete, onUpdate, showOverlay, enableCardAudio, standardColumns, customColumns, onDragStart, onDragEnd, onDragOver, onDrop, isDragging, isDragOver, reinitTrigger }) {
     const locationRef = React.useRef(null);
     const memoRef = React.useRef(null);
+    const [orderValue, setOrderValue] = React.useState(reference.order || 1);
+
+    // reference.orderが変更されたらorderValueも更新
+    React.useEffect(() => {
+        setOrderValue(reference.order || 1);
+    }, [reference.order]);
 
     const handleLocationBlur = (e) => {
         const newValue = e.target.textContent.trim();
@@ -92,7 +98,9 @@ window.ReferenceCard = function ReferenceCard({ reference, onDelete, onUpdate, s
                             <input
                                 type="number"
                                 min="1"
-                                defaultValue={reference.order || 1}
+                                value={orderValue}
+                                onChange={(e) => setOrderValue(e.target.value)}
+                                onBlur={handleOrderChange}
                                 onKeyDown={handleOrderKeyDown}
                                 onClick={(e) => e.stopPropagation()}
                                 className="w-full text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
