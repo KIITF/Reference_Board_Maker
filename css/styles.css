@@ -329,8 +329,42 @@ input[type="range"]::-moz-range-thumb {
     border: none;
 }
 
+/* コンテナの最大幅とレスポンシブパディング */
+.app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .app-container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .app-container {
+        padding-left: 3rem;
+        padding-right: 3rem;
+    }
+}
+
+@media (min-width: 1536px) {
+    .app-container {
+        padding-left: 4rem;
+        padding-right: 4rem;
+    }
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
+    .app-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
     .reference-card-wrapper {
         grid-template-columns: 1fr;
     }

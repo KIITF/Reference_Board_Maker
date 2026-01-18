@@ -596,7 +596,7 @@ window.App = function App() {
                 </div>
             </header>
 
-            <main className="container mx-auto px-4 py-8">
+            <main className="app-container py-8">
                 <div className="mb-6 max-w-3xl mx-auto">
                     <div className="   rounded-lg p-4">
                         {/* <label className="block text-sm font-medium text-gray-700 mb-2">全体のメッセージ</label> */}
@@ -859,7 +859,7 @@ window.App = function App() {
             </main>
 
             <footer className="bg-gray-800 text-gray-300 py-6 mt-12">
-                <div className="container mx-auto px-4 text-center">
+                <div className="app-container text-center">
                     <p className="text-sm">Video Reference Board - Loop Player Version</p>
                 </div>
             </footer>
