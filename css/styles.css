@@ -1,0 +1,355 @@
+/* Video Reference Board - Custom Styles */
+
+/* number inputのスピナーを非表示 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* モーダルオーバーレイ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-down {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.animate-fade-in-down {
+    animation: fade-in-down 0.3s ease-out;
+}
+
+/* モーダルコンテンツ */
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.modal-message {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.modal-button-cancel {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.modal-button-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+.modal-button-confirm {
+    background-color: #2563eb;
+    color: white;
+}
+
+.modal-button-confirm:hover {
+    background-color: #1d4ed8;
+}
+
+/* モーダル入力フィールド */
+.modal-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.modal-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* YouTubeプレーヤーのサイズ調整 */
+#preview-player,
+#preview-player iframe {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* カード内の動画プレーヤーのサイズ調整 */
+[id^="player-"] {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+[id^="player-"] iframe {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* 4列グリッドレイアウト */
+.reference-card-row {
+    /* グリッドはインラインスタイルで定義 */
+}
+
+/* 各セル */
+.reference-card-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 削除ボタンの列 */
+.delete-column {
+    background: transparent;
+}
+
+.reference-card-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ドラッグハンドルの削除確認モーダル */
+.drag-handle .delete-confirm-modal {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    white-space: nowrap;
+    min-width: 200px;
+}
+
+/* 編集可能なテキストのスタイル */
+.editable-text {
+    transition: background-color 0.2s ease;
+}
+
+.editable-text:hover {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+.editable-text:focus {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.editable-text:empty:before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+}
+
+/* ドラッグハンドルのスタイル */
+.drag-handle {
+    user-select: none;
+}
+
+/* ドラッグオーバー時のスタイル - カード間に青い線を表示 */
+.drag-over-target {
+    position: relative;
+}
+
+.drag-over-target::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+    border-radius: 3px;
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.8), 0 0 8px rgba(59, 130, 246, 0.6);
+    z-index: 10;
+    animation: pulse-glow 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 16px rgba(59, 130, 246, 0.8), 0 0 8px rgba(59, 130, 246, 0.6);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 24px rgba(59, 130, 246, 1), 0 0 12px rgba(59, 130, 246, 0.8);
+    }
+}
+
+/* 一番下のドロップゾーン */
+.bottom-drop-zone {
+    position: relative;
+}
+
+.drag-over-bottom {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* 行間の追加ボタン */
+.add-row-button {
+    position: relative;
+    height: 24px;
+    background: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.add-row-button:hover {
+    height: 32px;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.add-row-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e5e7eb;
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
+}
+
+.add-row-button:hover .add-row-line {
+    height: 2px;
+    background: #3b82f6;
+}
+
+.add-row-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    background: #3b82f6;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.add-row-btn:hover {
+    background: #2563eb;
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+}
+
+/* タイムラインのレンジインプットのスタイルをカスタマイズ */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+    border: none;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    .reference-card-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .reference-card-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .reference-card-cell {
+        border-right: none !important;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .reference-card-cell:last-child {
+        border-bottom: none;
+    }
+    
+    .delete-column {
+        border-left: none !important;
+        border-top: 2px solid #e5e7eb;
+    }
+}
