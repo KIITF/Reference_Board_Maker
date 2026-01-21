@@ -1188,12 +1188,7 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
                 ))}
 
                 <div className="flex gap-3">
-                    <button
-                        type="submit"
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
-                    >
-                        リファレンスを追加
-                    </button>
+                    
                     {onCancel && (
                         <button
                             type="button"
@@ -1203,6 +1198,12 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
                             キャンセル
                         </button>
                     )}
+                    <button
+                        type="submit"
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
+                    >
+                        リファレンスを追加
+                    </button>
                 </div>
             </form>
         </div>
