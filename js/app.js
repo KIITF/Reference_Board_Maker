@@ -457,6 +457,92 @@ window.App = function App() {
         }
     };
 
+    // エクスポート機能：JSONファイルとしてダウンロード
+    const handleExportToFile = () => {
+        const data = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            references: references,
+            globalMessage: globalMessage,
+            standardColumns: standardColumns,
+            customColumns: customColumns
+        };
+
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // ファイル名を生成（例: reference_board_20260121_143022.json）
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+        a.download = `reference_board_${dateStr}_${timeStr}.json`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // インポート機能：ファイルから読み込み
+    const handleImportFromFile = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // データの検証
+                    if (!data.references || !Array.isArray(data.references)) {
+                        setNotificationModal({ show: true, message: '無効なファイル形式です' });
+                        return;
+                    }
+                    
+                    // 確認モーダルを表示
+                    setConfirmModal({
+                        show: true,
+                        message: `${data.references.length}件のリファレンスをインポートします。既存のデータは上書きされますがよろしいですか？`,
+                        onConfirm: () => {
+                            // データをインポート
+                            if (data.references && data.references.length > 0) {
+                                const refsWithOrder = data.references.map((ref, idx) => ({
+                                    ...ref,
+                                    order: ref.order !== undefined ? ref.order : idx + 1
+                                }));
+                                const sorted = refsWithOrder.sort((a, b) => (a.order || 0) - (b.order || 0));
+                                setReferences(sorted);
+                            }
+                            if (data.globalMessage !== undefined) {
+                                setGlobalMessage(data.globalMessage);
+                            }
+                            if (data.standardColumns) {
+                                setStandardColumns(data.standardColumns);
+                            }
+                            if (data.customColumns) {
+                                setCustomColumns(data.customColumns);
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('Import error:', error);
+                    setNotificationModal({ show: true, message: 'ファイルの読み込みに失敗しました' });
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        input.click();
+    };
+
     return (
         <div className="min-h-screen">
             <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-6 shadow-lg">
@@ -477,7 +563,7 @@ window.App = function App() {
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                     </svg>
-                                    共有
+                                    共有（URL）
                                 </button>
                                 {shareMessage && (
                                     <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1.5 bg-white text-blue-600 text-sm font-medium rounded-md shadow-lg whitespace-nowrap animate-fade-in-down">
@@ -487,7 +573,55 @@ window.App = function App() {
                             </div>
                             <div className="relative">
                                 <button
-                                    onClick={() => setShowSettings(!showSettings)}
+                                    onClick={() => setShowSettings(prev => prev === 'file' ? false : 'file')}
+                                    className="settings-button flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all border-2 bg-transparent border-white text-white hover:bg-blue-700"
+                                    title="ファイル共有"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3 3m0 0l-3-3m3 3V10" />
+                                    </svg>
+                                    共有（ファイル）
+                                </button>
+                                {showSettings === 'file' && (
+                                    <div className="settings-menu absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50" onClick={(e) => e.stopPropagation()}>
+                                        <div className="p-4">
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4">ファイル共有</h3>
+                                            <div className="space-y-2">
+                                                <button
+                                                    onClick={() => {
+                                                        handleExportToFile();
+                                                        setShowSettings(false);
+                                                    }}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                                    </svg>
+                                                    エクスポート
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        handleImportFromFile();
+                                                        setShowSettings(false);
+                                                    }}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                    </svg>
+                                                    インポート
+                                                </button>
+                                                <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+                                                    ※ JSONファイルでリファレンスボードを共有できます
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowSettings(prev => prev === 'settings' ? false : 'settings')}
                                     className="settings-button flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all border-2 bg-transparent border-white text-white hover:bg-blue-700"
                                     title="設定"
                                 >
@@ -497,14 +631,14 @@ window.App = function App() {
                                     </svg>
                                     設定
                                 </button>
-                                {showSettings && (
+                                {showSettings === 'settings' && (
                                     <div className="settings-menu absolute top-full right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50" onClick={(e) => e.stopPropagation()}>
                                         <div className="p-4">
                                             <h3 className="text-lg font-semibold text-gray-800 mb-4">設定</h3>
                                             <div className="space-y-3">
-                                                <label className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                                                    <span className="text-gray-700">動画の上部を隠す</span>
-                                                    <p className="text-s text-amber-600 mt-3 leading-relaxed">動画情報隠す用</p>
+                                                <div className="p-3 hover:bg-gray-50 rounded-lg">
+                                                    <label className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                    <span className="text-gray-700">映像の上部を隠す</span>
                                                     <input
                                                         type="checkbox"
                                                         checked={showOverlay}
@@ -512,9 +646,14 @@ window.App = function App() {
                                                         className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                                                     />
                                                 </label>
+                                                    <p className="text-s text-amber-600 mt-3 leading-relaxed">※ 映像情報隠す用</p>
+                                                </div>
+                                                
+                                                    
+                                                
                                                 <div className="p-3 hover:bg-gray-50 rounded-lg">
                                                     <label className="flex items-center justify-between cursor-pointer">
-                                                        <span className="text-gray-700">静止画モードを有効</span>
+                                                        <span className="text-gray-700">Youtubeの静止画モードを有効</span>
                                                         <input
                                                             type="checkbox"
                                                             checked={enableStillImage}
@@ -663,10 +802,10 @@ window.App = function App() {
                                         </div>
                                     </div>
                                 </div>
-                                {/* 右側の固定エリア（参考動画） */}
+                                {/* 右側の固定エリア（参考映像） */}
                                 <div className="flex-shrink-0" style={{width: 'calc(700px + 8px)'}}>
                                     <div style={{padding: '12px 8px'}}>
-                                        <div className="p-2 font-semibold text-gray-700 text-center bg-gray-100 border border-gray-300 rounded">参考動画</div>
+                                        <div className="p-2 font-semibold text-gray-700 text-center bg-gray-100 border border-gray-300 rounded">参考映像</div>
                                     </div>
                                 </div>
                             </div>

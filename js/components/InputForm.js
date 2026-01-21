@@ -1,5 +1,6 @@
 window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, customColumns, onTogglePlayReady, enableStillImage = false }) {
     const [url, setUrl] = React.useState('');
+    const [urlType, setUrlType] = React.useState('unknown'); // URLの種類を追跡
     const [videoId, setVideoId] = React.useState(null);
     const [videoTitle, setVideoTitle] = React.useState('');
     const [isStillImage, setIsStillImage] = React.useState(false);
@@ -41,15 +42,50 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
     const handleUrlChange = (e) => {
         const newUrl = e.target.value;
         setUrl(newUrl);
-        const id = extractVideoId(newUrl);
-        if (id && id !== videoId) {
-            setVideoId(id);
+        
+        // URLが空の場合はリセット
+        if (!newUrl.trim()) {
+            setUrlType('unknown');
+            setVideoId(null);
             setError('');
             if (previewPlayer) {
                 previewPlayer.destroy();
                 setPreviewPlayer(null);
             }
-            setTimeout(() => initPreviewPlayer(id), 100);
+            return;
+        }
+        
+        // URLの種類を判定
+        const detectedType = detectUrlType(newUrl);
+        setUrlType(detectedType);
+        
+        console.log('URL Type detected:', detectedType, 'for URL:', newUrl);
+        
+        if (detectedType === 'youtube') {
+            const id = extractVideoId(newUrl);
+            if (id && id !== videoId) {
+                setVideoId(id);
+                setError('');
+                if (previewPlayer) {
+                    previewPlayer.destroy();
+                    setPreviewPlayer(null);
+                }
+                setTimeout(() => initPreviewPlayer(id), 100);
+            }
+        } else if (detectedType === 'googledrive') {
+            // Google Driveの場合はvideoIdをnullに設定
+            setVideoId(null);
+            setError('');
+            if (previewPlayer) {
+                previewPlayer.destroy();
+                setPreviewPlayer(null);
+            }
+            // Google Drive用のプレビューを初期化（iframe使用）
+            // 注意：video要素ではなくiframeを使用するため、別処理
+            setTimeout(() => initGoogleDrivePreview(newUrl), 100);
+        } else {
+            setVideoId(null);
+            setError('YouTubeまたはGoogle DriveのURLを入力してください');
         }
     };
 
@@ -92,6 +128,31 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
                 });
             }
         }, 100);
+    };
+
+    const initGoogleDrivePreview = (driveUrl) => {
+        const embedUrl = convertGoogleDriveToEmbedLink(driveUrl);
+        if (!embedUrl) {
+            setError('Google DriveのURLが無効です');
+            console.error('Invalid Google Drive URL:', driveUrl);
+            return;
+        }
+        
+        console.log('=== Initializing Google Drive Preview (iframe) ===');
+        console.log('Original URL:', driveUrl);
+        console.log('Embed URL:', embedUrl);
+        
+        // Google Driveの場合、タイトルが未入力なら空のままにする（ユーザーが入力する）
+        // 既に入力されている場合はそのまま保持
+        if (!videoTitle) {
+            setVideoTitle('');
+        }
+        
+        // Google Driveの場合はプレビュープレイヤーは不要（iframeで表示）
+        setPreviewPlayer(null);
+        setDuration(0); // 時間は不明
+        setStartSeconds(0);
+        setEndSeconds(0);
     };
 
     const startTimeTracking = (player) => {
@@ -398,20 +459,23 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
             return;
         }
 
-        // YouTubeURLが入力されている場合のバリデーション
-        if (videoId && !isStillImage && startSeconds >= endSeconds) {
+        // YouTubeの場合のみ時間のバリデーション（Google Driveは時間指定なし）
+        if (urlType === 'youtube' && videoId && !isStillImage && startSeconds >= endSeconds) {
             setError('終了時間は開始時間より大きい値を設定してください');
             return;
         }
 
         const newReference = {
             id: Date.now(),
+            url: url || '',
             videoId: videoId || null,
-            videoTitle: videoTitle || '',
+            // Google Driveでタイトルが空の場合はデフォルト値を設定
+            videoTitle: videoTitle || (urlType === 'googledrive' ? 'Google Drive動画' : ''),
             isStillImage: isStillImage,
             stillImageTime: isStillImage ? parseFloat(stillImageTime) : undefined,
-            startSeconds: videoId ? parseFloat(isStillImage ? stillImageTime : startSeconds) : 0,
-            endSeconds: videoId ? parseFloat(isStillImage ? stillImageTime : endSeconds) : 0,
+            // YouTube の場合のみ時間を設定、Google Driveの場合は0
+            startSeconds: (urlType === 'youtube' && videoId) ? parseFloat(isStillImage ? stillImageTime : startSeconds) : 0,
+            endSeconds: (urlType === 'youtube' && videoId) ? parseFloat(isStillImage ? stillImageTime : endSeconds) : 0,
             location: location || '',
             memo: memo || '（メモなし）',
             customFields: customFields
@@ -455,18 +519,38 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
                 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        YouTube URL
+                        動画URL（YouTubeまたはGoogle Drive）
                     </label>
                     <input
                         type="text"
                         value={url}
                         onChange={handleUrlChange}
-                        placeholder="https://www.youtube.com/watch?v=..."
+                        placeholder="https://www.youtube.com/... または https://drive.google.com/..."
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
 
-                {videoId && (
+                {/* Google Driveの場合はタイトル入力欄を表示 */}
+                {urlType === 'googledrive' && url && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            動画タイトル（任意）
+                        </label>
+                        <input
+                            type="text"
+                            value={videoTitle}
+                            onChange={(e) => setVideoTitle(e.target.value)}
+                            // placeholder="例: 雨は短い - 参考映像"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            ※ タイトルを入力しない場合は「Google Drive動画」と表示されます
+                        </p>
+                    </div>
+                )}
+
+                {/* YouTubeの場合のみモード選択と時間指定を表示 */}
+                {urlType === 'youtube' && videoId && (
                     <>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -505,27 +589,49 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
                                 プレビュー
                             </label>
                             <div className="aspect-video bg-black rounded-lg overflow-hidden mb-3 relative">
-                                <div id="preview-player"></div>
-                                {/* ミュートボタン */}
-                                <button
-                                    onClick={toggleMute}
-                                    className="absolute bottom-2 right-2 z-20 bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
-                                    aria-label={isMuted ? "ミュート解除" : "ミュート"}
-                                    title={isMuted ? "ミュート解除" : "ミュート"}
-                                >
-                                    {isMuted ? (
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                        </svg>
-                                    )}
-                                </button>
+                                {/* YouTube用プレーヤー */}
+                                {urlType === 'youtube' && videoId && (
+                                    <div id="preview-player"></div>
+                                )}
+                                {/* Google Drive用iframe */}
+                                {urlType === 'googledrive' && url && (
+                                    <iframe
+                                        className="w-full h-full"
+                                        src={convertGoogleDriveToEmbedLink(url) + '?muted=1'}
+                                        allow="autoplay"
+                                        style={{ border: 'none' }}
+                                    />
+                                )}
+                                {/* プレースホルダー（URLが未入力の場合） */}
+                                {urlType === 'unknown' && (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-500">
+                                        URLを入力してください
+                                    </div>
+                                )}
+                                {/* YouTube用ミュートボタン */}
+                                {urlType === 'youtube' && videoId && (
+                                    <button
+                                        onClick={toggleMute}
+                                        className="absolute bottom-2 right-2 z-20 bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
+                                        aria-label={isMuted ? "ミュート解除" : "ミュート"}
+                                        title={isMuted ? "ミュート解除" : "ミュート"}
+                                    >
+                                        {isMuted ? (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                             
+                            {/* タイムライン: YouTubeの場合のみ表示 */}
+                            {urlType === 'youtube' && videoId && (
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
@@ -895,6 +1001,7 @@ window.InputForm = function InputForm({ onAdd, onCancel, standardColumns, custom
                                     </div>
                                 </div>
                             </div>
+                            )}
                         </div>
 
                         <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">

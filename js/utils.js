@@ -12,6 +12,69 @@ window.extractVideoId = function extractVideoId(url) {
     return null;
 }
 
+// Google DriveのURLからファイルIDを抽出する関数
+window.extractGoogleDriveFileId = function extractGoogleDriveFileId(url) {
+    const patterns = [
+        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+        /drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+// Google DriveのURLを直リンク（Direct Link）に変換
+// 注: 動画ファイルの場合は /uc?export=view の方が適している
+window.convertGoogleDriveToDirectLink = function convertGoogleDriveToDirectLink(url) {
+    const fileId = extractGoogleDriveFileId(url);
+    if (!fileId) return null;
+    
+    // 動画ファイルの場合は export=view を使用（ストリーミング再生に対応）
+    // export=download はダウンロードを強制するため、大きなファイルで問題が発生する可能性がある
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+}
+
+// Google Driveの埋め込み用URL（iframe用）を生成
+window.convertGoogleDriveToEmbedLink = function convertGoogleDriveToEmbedLink(url) {
+    const fileId = extractGoogleDriveFileId(url);
+    if (!fileId) return null;
+    
+    // iframe埋め込み用のpreview URLを使用
+    // これが最も確実にGoogle Drive動画を表示できる方法
+    return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
+// URLの種類を判定する関数
+window.detectUrlType = function detectUrlType(url) {
+    if (!url) return 'unknown';
+    
+    // YouTube判定
+    if (extractVideoId(url)) {
+        return 'youtube';
+    }
+    
+    // Google Drive判定
+    if (extractGoogleDriveFileId(url)) {
+        return 'googledrive';
+    }
+    
+    // 画像URL判定（拡張子チェック）
+    if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i.test(url)) {
+        return 'image';
+    }
+    
+    // 動画URL判定（拡張子チェック）
+    if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) {
+        return 'video';
+    }
+    
+    return 'unknown';
+}
+
 // URLパラメータにデータをエンコード（LZ-string圧縮を使用）
 window.encodeToUrl = function encodeToUrl(data) {
     try {

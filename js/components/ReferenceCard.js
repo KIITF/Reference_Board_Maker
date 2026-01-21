@@ -66,6 +66,26 @@ window.ReferenceCard = function ReferenceCard({ reference, onDelete, onUpdate, s
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // URLの種類を判定
+    const urlType = reference.url ? detectUrlType(reference.url) : 'youtube';
+    const isGoogleDrive = urlType === 'googledrive';
+    
+    // Google Driveのファイル名を取得
+    const getFileName = () => {
+        if (isGoogleDrive && reference.videoTitle) {
+            return reference.videoTitle;
+        }
+        return reference.videoTitle || '動画なし';
+    };
+    
+    // 動画リンクURLを取得
+    const getVideoLink = () => {
+        if (isGoogleDrive) {
+            return reference.url;
+        }
+        return `https://www.youtube.com/watch?v=${reference.videoId}`;
+    };
+
     return (
         <div 
             className={`reference-card-row ${isDragging ? 'opacity-50' : ''} ${isDragOver ? 'drag-over-target' : ''}`}
@@ -173,7 +193,7 @@ window.ReferenceCard = function ReferenceCard({ reference, onDelete, onUpdate, s
                         })}
                     </div>
                 </div>
-                {/* 右側の固定エリア（参考動画） */}
+                {/* 右側の固定エリア（参考映像） */}
                 <div className="flex-shrink-0" style={{width: '700px'}}>
                     <div>
                         <div 
@@ -185,49 +205,53 @@ window.ReferenceCard = function ReferenceCard({ reference, onDelete, onUpdate, s
                                     <div>
                                         {/* <div className="text-xs text-gray-500 mb-1">動画タイトル</div> */}
                                         <a 
-                                            href={`https://www.youtube.com/watch?v=${reference.videoId}`}
+                                            href={getVideoLink()}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-sm text-blue-600 hover:text-blue-800 hover:underline block"
                                             style={{lineHeight: '1.4', wordBreak: 'break-word'}}
                                         >
-                                            {reference.videoTitle || '動画なし'}
+                                            {getFileName()}
                                         </a>
                                     </div>
-                                    <div>
-                                        {/* <div className="text-xs text-gray-500 mb-1">時間範囲</div> */}
-                                        <div className="text-sm text-gray-700">
-                                            {reference.isStillImage ? (
-                                                // 静止画モード：1つの時間のみ表示
-                                                <>
-                                                    <a 
-                                                        href={`https://www.youtube.com/watch?v=${reference.videoId}&t=${Math.floor(reference.stillImageTime)}s`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                                                    >
-                                                        {formatTime(reference.stillImageTime)}
-                                                    </a>
-                                                    <span className="ml-2 text-xs text-gray-500">（静止画）</span>
-                                                    <div className="text-xs text-amber-600 mt-1">※ ダブルクリックして表示</div>
-                                                </>
-                                            ) : (
-                                                // 動画モード：範囲を表示
-                                                <>
-                                                    <a 
-                                                        href={`https://www.youtube.com/watch?v=${reference.videoId}&t=${Math.floor(reference.startSeconds)}s`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                                                    >
-                                                        {formatTime(reference.startSeconds)}
-                                                    </a>
-                                                    {' - '}
-                                                    {formatTime(reference.endSeconds)}
-                                                </>
-                                            )}
+                                    
+                                    {/* Google Driveの場合は時間表示を省略 */}
+                                    {!isGoogleDrive && (
+                                        <div>
+                                            {/* <div className="text-xs text-gray-500 mb-1">時間範囲</div> */}
+                                            <div className="text-sm text-gray-700">
+                                                {reference.isStillImage ? (
+                                                    // 静止画モード：1つの時間のみ表示
+                                                    <>
+                                                        <a 
+                                                            href={`https://www.youtube.com/watch?v=${reference.videoId}&t=${Math.floor(reference.stillImageTime)}s`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                        >
+                                                            {formatTime(reference.stillImageTime)}
+                                                        </a>
+                                                        <span className="ml-2 text-xs text-gray-500">（静止画）</span>
+                                                        <div className="text-xs text-amber-600 mt-1">※ ダブルクリックして表示</div>
+                                                    </>
+                                                ) : (
+                                                    // 動画モード：範囲を表示
+                                                    <>
+                                                        <a 
+                                                            href={`https://www.youtube.com/watch?v=${reference.videoId}&t=${Math.floor(reference.startSeconds)}s`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                        >
+                                                            {formatTime(reference.startSeconds)}
+                                                        </a>
+                                                        {' - '}
+                                                        {formatTime(reference.endSeconds)}
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                                 <div style={{flex: '1', minWidth: '0', overflow: 'hidden'}}>
                                     <VideoPlayer reference={reference} showOverlay={showOverlay} enableCardAudio={enableCardAudio} reinitTrigger={reinitTrigger} />
